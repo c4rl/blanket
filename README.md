@@ -6,3 +6,4 @@ To run tests:
 
     $ composer install
     $ ./vendor/phpspec/phpspec/bin/phpspec run
+    $ ./vendor/bin/phpunit --configuration=./phpunit.xml
