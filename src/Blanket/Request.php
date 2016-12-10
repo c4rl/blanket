@@ -85,7 +85,7 @@ class Request {
 
       switch ($globals['REQUEST_METHOD']) {
         case 'POST':
-          $globals['_POST_DATA'] = preg_match('/application\/x-www-form-urlencoded/', $_SERVER['CONTENT_TYPE']) ? $_POST : self::readInputData();
+          $globals['_POST_DATA'] = isset($_SERVER['CONTENT_TYPE']) && preg_match('/application\/x-www-form-urlencoded/', $_SERVER['CONTENT_TYPE']) ? $_POST : self::readInputData();
           break;
 
         case 'PUT':
