@@ -63,6 +63,7 @@ class App {
       \Blanket\Exception\MissingRouteException::class => \Blanket\Exception\Http404Exception::class,
     ],
     'models' => [],
+    'resources' => [],
     'storage' => NULL,
   ];
 
@@ -74,8 +75,59 @@ class App {
    */
   public function __construct(array $config = []) {
     $this->config = $config + $this->default_config;
+    if (count($this->config['resources']) > 0) {
+      $this->registerResources();
+    }
     if (isset($this->config['storage'])) {
       $this->registerStorageModels();
+    }
+  }
+
+  /**
+   * Registers basic REST resource.
+   */
+  private function registerResources() {
+
+    /** @var Model $class_name */
+    foreach ($this->config['resources'] as $path => $class_name) {
+      if (!in_array($class_name, $this->config['models'])) {
+        $this->config['models'][] = $class_name;
+      }
+
+      $this->post($path, function (Request $request) use ($class_name) {
+        return $class_name::create($request->post_data)->getAttributes();
+      });
+
+      $unit_path = sprintf('%s/:id', $path);
+      $this->get($unit_path, function ($id, Request $request) use ($class_name) {
+        return $class_name::findOrFail($id)->getAttributes();
+      });
+
+      $this->put($unit_path, function ($id, Request $request) use ($class_name) {
+        return $class_name::findOrFail($id)
+          ->updateAttributes($request->put_data)
+          ->saveIfChanged()
+          ->getAttributes();
+      });
+
+      $this->delete($unit_path, function ($id, Request $request) use ($class_name) {
+        return $class_name::findOrFail($id)
+          ->delete()
+          ->getAttributes();
+      });
+
+      $this->get($path, function (Request $request) use ($class_name, $path) {
+        $page = isset($request->get_data['page']) ? (int) $request->get_data['page'] : 1;
+        $per_page = isset($request->get_data['per_page']) ? (int) $request->get_data['per_page'] : 10;
+        $instances = $class_name::all($page, $per_page);
+        $total = count($instances);
+        $all_instance_data = array_map(function (Model $instance) {
+          return $instance->getAttributes();
+        }, $instances);
+        return compact('total', 'page', 'per_page') + [
+          $path => $all_instance_data
+        ];
+      });
     }
   }
 
