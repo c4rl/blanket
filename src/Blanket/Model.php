@@ -41,11 +41,21 @@ class Model {
   public static $storage;
 
   /**
-   * Schema definition.
+   * Static schema registry.
    *
    * @var array
    */
-  public static $schema;
+  private static $schema_registry = [];
+
+  /**
+   * Returns schema for called class.
+   *
+   * @return array
+   *   Schema definition.
+   */
+  public static function getSchema() {
+    return self::parseSchema(get_called_class());
+  }
 
   /**
    * Returns table name for model storage.
@@ -64,7 +74,6 @@ class Model {
    *   Attributes.
    */
   public function __construct(array $attributes = []) {
-    static::registerSchema();
     $this->original_attributes = $this->attributes = self::coerceAttributes($attributes);
   }
   /**
@@ -269,23 +278,29 @@ class Model {
    * @return array
    *   Schema array keyed by field with 'name' and 'type'.
    */
-  public static function registerSchema() {
-    if (isset(static::$schema)) return static::$schema;
+  public static function parseSchema($class_name) {
 
-    $reflection = new \ReflectionClass(get_called_class());
-    $lines = explode(PHP_EOL, $reflection->getDocComment());
+    if (!array_key_exists($class_name, self::$schema_registry)) {
+      $reflection = new \ReflectionClass($class_name);
+      $lines = explode(PHP_EOL, $reflection->getDocComment());
 
-    return static::$schema = array_reduce($lines, function (array $schema, $line) {
+      $schema = array_reduce($lines, function (array $schema, $line) {
 
-      $matches = [];
-      if (preg_match('/^\* @property ([^ ]+) ([^ ]+) ?.*$/', trim($line), $matches)) {
-        $name = preg_replace('/[^a-z]/i', '', $matches[2]);
-        $type = $matches[1];
-        $schema[$name] = compact('name', 'type');
-      }
+        $matches = [];
+        if (preg_match('/^\* @property ([^ ]+) ([^ ]+) ?.*$/', trim($line), $matches)) {
+          $name = preg_replace('/[^a-z]/i', '', $matches[2]);
+          $type = $matches[1];
+          $schema[$name] = compact('name', 'type');
+        }
 
-      return $schema;
-    }, []);
+        return $schema;
+      }, []);
+
+      self::$schema_registry[$class_name] = $schema;
+
+    }
+
+    return self::$schema_registry[$class_name];
   }
 
   /**
@@ -317,7 +332,7 @@ class Model {
    *   Coerced value.
    */
   private static function coerceType($name, $value) {
-    switch (static::$schema[$name]['type']) {
+    switch (static::getSchema()[$name]['type']) {
       case 'bool':
         $coerced_value = (bool) $value;
         break;

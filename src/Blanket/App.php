@@ -140,7 +140,7 @@ class App {
     $schema_registry = [];
     foreach ($this->config['models'] as $class_name) {
       /** @var Model $class_name */
-      $schema_registry[$class_name::getTable()] = $class_name::registerSchema();
+      $schema_registry[$class_name::getTable()] = Model::parseSchema($class_name);
       $class_name::$storage = $storage;
     }
     $storage->setSchemaRegistry($schema_registry);
