@@ -48,16 +48,6 @@ class Model {
   private static $schema_registry = [];
 
   /**
-   * Returns schema for called class.
-   *
-   * @return array
-   *   Schema definition.
-   */
-  public static function getSchema() {
-    return self::parseSchema(get_called_class());
-  }
-
-  /**
    * Returns table name for model storage.
    *
    * @return string
@@ -74,44 +64,106 @@ class Model {
    *   Attributes.
    */
   public function __construct(array $attributes = []) {
-    $this->original_attributes = $this->attributes = self::coerceAttributes($attributes);
+    // Set each individually to take advantage of custom mutators.
+    foreach ($attributes as $key => $value) {
+      $this->set($key, $value);
+    }
+    $this->original_attributes = $this->attributes;
   }
+
   /**
    * Getter for attribute.
    *
-   * @param string $name
+   * @param string $key
    *   Name of attribute.
    *
    * @return mixed
    *   Attribute value.
    */
-  public function __get($name) {
-    return $this->attributes[$name];
+  public function __get($key) {
+    return $this->get($key);
+  }
+
+  /**
+   * Getter for attribute.
+   *
+   * @param string $key
+   *   Name of attribute.
+   *
+   * @return mixed
+   *   Attribute value.
+   */
+  protected function get($key) {
+    $accessor_method = Utility::camelCase(sprintf('get_%s', $key));
+    if (method_exists($this, $accessor_method)) {
+      return $this->{$accessor_method}();
+    }
+    else {
+      return array_key_exists($key, $this->attributes) ? $this->attributes[$key] : NULL;
+    }
   }
 
   /**
    * Setter for attribute.
    *
-   * @param string $name
+   * @param string $key
    *   Name of attribute.
-   *
    * @param mixed $value
    *   Attribute value to set.
    */
-  public function __set($name, $value) {
-    $this->attributes[$name] = self::coerceType($name, $value);
+  public function __set($key, $value) {
+    $this->attributes[$key] = $value;
+  }
+
+  /**
+   * Sets attribute.
+   *
+   * @param string $key
+   *   Name of attribute.
+   * @param mixed $value
+   *   Attribute value to set.
+   */
+  protected function set($key, $value) {
+    // Use custom mutator, if defined.
+    $mutator_method = Utility::camelCase(sprintf('set_%s', $key));
+    if (method_exists($this, $mutator_method)) {
+      $this->{$mutator_method}($value);
+    }
+    else {
+      $this->attributes[$key] = $value;
+    }
+  }
+
+  /**
+   * Customer mutator for ID.
+   *
+   * @param mixed $value
+   *   ID value. Will be cast to int if not NULL.
+   */
+  public function setId($value) {
+    $this->attributes['id'] = is_numeric($value) ? (int) $value : NULL;
   }
 
   /**
    * Existence for attribute.
    *
-   * @param string $name
+   * @param string $key
    *
    * @return bool
    *   Whether value exists.
    */
-  public function __isset($name) {
-    return array_key_exists($name, $this->attributes);
+  public function __isset($key) {
+    return isset($this->attributes[$key]);
+  }
+
+  /**
+   * Unset for attribute.
+   *
+   * @param string $key
+   *   Name of attribute.
+   */
+  public function __unset($key) {
+    unset($this->attributes[$key]);
   }
 
   /**
@@ -135,7 +187,7 @@ class Model {
    */
   public function updateAttributes(array $attributes) {
     foreach ($attributes as $key => $value) {
-      $this->{$key} = $value;
+      $this->set($key, $value);
     }
 
     return $this;
@@ -301,55 +353,6 @@ class Model {
     }
 
     return self::$schema_registry[$class_name];
-  }
-
-  /**
-   * Coerces attributes to specified types.
-   *
-   * @param array $attributes
-   *   Attributes.
-   *
-   * @return array
-   *   Coerced attributes.
-   */
-  private static function coerceAttributes(array $attributes) {
-    $coerced_attributes = [];
-    foreach ($attributes as $name => $value) {
-      $coerced_attributes[$name] = self::coerceType($name, $value);
-    }
-    return $coerced_attributes;
-  }
-
-  /**
-   * Coerces variable to specified type.
-   *
-   * @param string $name
-   *   Name of column.
-   * @param mixed $value
-   *   Value of column.
-   *
-   * @return mixed
-   *   Coerced value.
-   */
-  private static function coerceType($name, $value) {
-    switch (static::getSchema()[$name]['type']) {
-      case 'bool':
-        $coerced_value = (bool) $value;
-        break;
-
-      case 'int':
-        $coerced_value = (int) $value;
-        break;
-
-      case 'string':
-        $coerced_value = (string) $value;
-        break;
-
-      default:
-        throw new \DomainException();
-    }
-
-    return $coerced_value;
   }
 
 }

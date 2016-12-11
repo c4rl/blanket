@@ -2,6 +2,7 @@
 
 namespace Blanket\Db;
 
+use Blanket\Debug;
 use Blanket\Storage\StorageStatementInterface;
 
 /**

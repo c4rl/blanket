@@ -12,7 +12,8 @@ use Blanket\Storage\StorageInterface;
  * @method get($path, \Closure $closure) Registers handler for GET request.
  * @method post($path, \Closure $closure) Registers handler for POST request.
  * @method put($path, \Closure $closure) Registers handler for PUT request.
- * @method delete($path, \Closure $closure) Degisters handler for DELETE request.
+ * @method delete($path, \Closure $closure) Registers handler for DELETE request.
+ * @method options($path, \Closure $closure) Registers handler for OPTIONS request.
  *
  * @package Blanket
  */
@@ -28,6 +29,7 @@ class App {
     'post',
     'put',
     'delete',
+    'options',
   ];
 
   /**
@@ -81,6 +83,7 @@ class App {
     if (isset($this->config['storage'])) {
       $this->registerStorageModels();
     }
+    $this->initAccessControl();
   }
 
   /**
@@ -193,7 +196,12 @@ class App {
     static $cache = [];
 
     if (!array_key_exists($path_mask, $cache)) {
-      $regex = sprintf('/^%s$/', preg_replace('/\//', '\/', preg_replace('/:[a-z]+/', '(.+?)', $path_mask)));
+      if ($path_mask == '*') {
+        $regex = '/^.+$/';
+      }
+      else {
+        $regex = sprintf('/^%s$/', preg_replace('/\//', '\/', preg_replace('/:[a-z]+/', '(.+?)', $path_mask)));
+      }
       $cache[$path_mask] = $regex;
     }
 
@@ -298,7 +306,10 @@ class App {
     try {
       $response = $this->getResponse($request);
 
-      if (is_string($response)) {
+      if (!isset($response)) {
+        header('Content-Type: text/html');
+      }
+      elseif (is_string($response)) {
         header('Content-Type: text/html');
         print $response;
       }
@@ -332,6 +343,22 @@ class App {
       print $exception_header_message;
     }
 
+  }
+
+  /**
+   * Initialize CORS stuff.
+   */
+  private function initAccessControl() {
+    $app = $this;
+    $this->options('*', function(Request $request) use ($app) {
+      header(sprintf('Allow: %s', strtoupper(implode(', ', $app::SUPPORTED_METHODS))));
+    });
+
+    header(sprintf('Access-Control-Allow-Methods: %s', strtoupper(implode(', ', $app::SUPPORTED_METHODS))));
+    header('Access-Control-Allow-Headers: Content-Type');
+    if (isset($app->config['allow_origin'])) {
+      header(sprintf('Access-Control-Allow-Origin: %s', $app->config['allow_origin']));
+    }
   }
 
 }
