@@ -3,10 +3,14 @@
 namespace spec\Blanket;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use Blanket\Request;
 
+/**
+ * Class AppSpec.
+ *
+ * @package spec\Blanket
+ */
 class AppSpec extends ObjectBehavior {
 
   function it_is_initializable() {

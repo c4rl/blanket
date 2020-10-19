@@ -2,8 +2,12 @@
 
 use Blanket\App;
 use Blanket\Request;
+use PHPUnit\Framework\TestCase;
 
-class AppGetTest extends PHPUnit_Framework_TestCase {
+/**
+ * Class AppGetTest.
+ */
+class AppGetTest extends TestCase {
 
   function testGetRequest() {
     /** @var Request $request */

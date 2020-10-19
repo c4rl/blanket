@@ -85,7 +85,6 @@ class App {
     if (isset($this->config['storage'])) {
       $this->registerStorageModels();
     }
-    $this->initAccessControl();
   }
 
   /**
@@ -303,6 +302,7 @@ class App {
    */
   public function run(Request $request) {
 
+    $this->initAccessControl();
     header('Cache-Control: no-cache, no-store, must-revalidate');
 
     try {
