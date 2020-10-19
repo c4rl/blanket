@@ -340,7 +340,7 @@ class Model {
 
         $matches = [];
         if (preg_match('/^\* @property ([^ ]+) ([^ ]+) ?.*$/', trim($line), $matches)) {
-          $name = preg_replace('/[^a-z]/i', '', $matches[2]);
+          $name = preg_replace('/[^a-z_]/i', '', $matches[2]);
           $type = $matches[1];
           $schema[$name] = compact('name', 'type');
         }
