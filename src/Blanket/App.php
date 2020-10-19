@@ -55,6 +55,7 @@ class App {
    *    to HTTP exceptions classes that should be thrown instead.
    *  - models: Array of FQCNs that should have schema registered with storage.
    *  - storage: Instance of Db.
+   *  - allow_origin: Used for Access-Control-Allow-Origin header.
    *
    * @var array
    *   Default configuration array.
@@ -67,6 +68,7 @@ class App {
     'models' => [],
     'resources' => [],
     'storage' => NULL,
+    'allow_origin' => NULL,
   ];
 
   /**
