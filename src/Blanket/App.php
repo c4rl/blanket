@@ -79,12 +79,6 @@ class App {
    */
   public function __construct(array $config = []) {
     $this->config = $config + $this->default_config;
-    if (count($this->config['resources']) > 0) {
-      $this->registerResources();
-    }
-    if (isset($this->config['storage'])) {
-      $this->registerStorageModels();
-    }
   }
 
   /**
@@ -302,7 +296,15 @@ class App {
    */
   public function run(Request $request) {
 
+    if (count($this->config['resources']) > 0) {
+      $this->registerResources();
+    }
+    if (isset($this->config['storage'])) {
+      $this->registerStorageModels();
+    }
+
     $this->initAccessControl();
+
     header('Cache-Control: no-cache, no-store, must-revalidate');
 
     try {
