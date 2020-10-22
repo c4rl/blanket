@@ -201,7 +201,7 @@ class App {
         $regex = '/^.+$/';
       }
       else {
-        $regex = sprintf('/^%s$/', preg_replace('/\//', '\/', preg_replace('/:[a-z]+/', '(.+?)', $path_mask)));
+        $regex = sprintf('/^%s$/', preg_replace('/\//', '\/', preg_replace('/:[a-z_]+/', '(.+?)', $path_mask)));
       }
       $cache[$path_mask] = $regex;
     }
