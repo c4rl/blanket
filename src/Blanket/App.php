@@ -326,6 +326,7 @@ class App {
 
     }
     catch (\Exception $e) {
+      error_log($e->getMessage());
       $original_exception_class = get_class($e);
       // If we have remapped the thrown exception type, use that exception.
       if (isset($this->config['exception_map'][$original_exception_class])) {
