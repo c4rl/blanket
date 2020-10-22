@@ -299,6 +299,34 @@ class Model {
   }
 
   /**
+   * Finds records by conditions.
+   *
+   * @param int $id
+   *   Primary key identifier.
+   *
+   * @return static[]
+   *   Found instances, or empty array.
+   */
+  public static function findAll($conditions) {
+
+    $query = static::$storage->select(static::$table);
+
+    foreach ($conditions as $key => $value) {
+      // @todo Allow for other operators, i.e. =,>,<, etc
+      $query->condition($key, $value, '=');
+    }
+
+    $rows = $query->executeAndFetchAll();
+
+    $instances = [];
+    foreach ($rows as $row) {
+      $instances[] = new static($row);
+    }
+
+    return $instances;
+  }
+
+  /**
    * @param int $page
    *   Page of records. Defaults to 1.
    *
@@ -308,7 +336,7 @@ class Model {
    * @return static[]
    *   Loaded instances.
    */
-  public static function all($page = 1, $per_page = 10) {
+  public static function allPaged($page = 1, $per_page = 10) {
 
     $start = ($page - 1) * $per_page;
 

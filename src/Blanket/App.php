@@ -117,7 +117,7 @@ class App {
       $this->get($path, function (Request $request) use ($class_name, $path) {
         $page = isset($request->get_data['page']) ? (int) $request->get_data['page'] : 1;
         $per_page = isset($request->get_data['per_page']) ? (int) $request->get_data['per_page'] : 10;
-        $instances = $class_name::all($page, $per_page);
+        $instances = $class_name::allPaged($page, $per_page);
         $total = count($instances);
         $all_instance_data = array_map(function (Model $instance) {
           return $instance->getAttributes();

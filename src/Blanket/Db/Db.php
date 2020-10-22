@@ -193,11 +193,8 @@ class Db implements StorageInterface {
         break;
 
       case 'string':
-        $coerced_value = (string) $value;
-        break;
-
       default:
-        throw new \DomainException();
+        $coerced_value = (string) $value;
     }
 
     return $coerced_value;
